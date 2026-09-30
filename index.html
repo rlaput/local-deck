@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LocalDeck</title>
+  <meta name="description" content="A private, offline-first productivity dashboard: habits, notes and bookmarks stored only in your browser.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0f19" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Crect x='7' y='7' width='8' height='8' rx='2' fill='white'/%3E%3Crect x='17' y='7' width='8' height='8' rx='2' fill='white' opacity='.6'/%3E%3Crect x='7' y='17' width='8' height='8' rx='2' fill='white' opacity='.6'/%3E%3Crect x='17' y='17' width='8' height='8' rx='2' fill='white'/%3E%3C/svg%3E">
+  <!-- Apply the saved theme before first paint to avoid a light/dark flash. -->
+  <script>
+    (function () {
+      var t;
+      try { t = (JSON.parse(localStorage.getItem('localdeck.settings') || '{}') || {}).theme; } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="./" aria-label="LocalDeck home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>LocalDeck</span>
+      </a>
+      <div class="topbar-actions">
+        <button type="button" id="exportBtn" class="btn btn-ghost" data-icon="download" title="Download all dashboard data as JSON"><span class="btn-label">Export</span></button>
+        <button type="button" id="importBtn" class="btn btn-ghost" data-icon="upload" title="Restore dashboard from a JSON backup"><span class="btn-label">Import</span></button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+        <button type="button" id="themeToggle" class="btn-icon" aria-label="Toggle dark mode"></button>
+      </div>
+    </div>
+  </header>
+
+  <div id="storageWarning" class="banner" role="alert" hidden>
+    Browser storage is unavailable (private mode or blocked site data). Changes will be lost when you close this tab — use <strong>Export</strong> to keep a copy.
+  </div>
+
+  <main id="main" class="container">
+    <!-- Quick stats -->
+    <section class="card stats" aria-label="Quick stats">
+      <div class="stats-date">
+        <p class="eyebrow" id="greeting">Hello</p>
+        <h1 id="todayDate">Today</h1>
+        <p class="muted"><time id="clock"></time></p>
+      </div>
+
+      <div class="stats-progress">
+        <div id="progressWrap" class="ring" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="progressLabel">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="ring-track" cx="50" cy="50" r="42"/>
+            <circle id="progressRing" class="ring-value" cx="50" cy="50" r="42"/>
+          </svg>
+          <span id="progressPct" class="ring-pct">—</span>
+        </div>
+        <div>
+          <p class="eyebrow">Today’s habits</p>
+          <p id="progressLabel" class="progress-label"></p>
+        </div>
+      </div>
+
+      <figure id="quote" class="stats-quote">
+        <blockquote id="quoteText"></blockquote>
+        <figcaption>
+          <span>— <span id="quoteAuthor"></span></span>
+          <button type="button" id="newQuoteBtn" class="btn btn-ghost btn-sm" data-icon="refresh"><span>New quote</span></button>
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- Launchpad -->
+    <section id="launchpad" class="card launchpad" aria-labelledby="launchpadTitle">
+      <div class="card-header">
+        <div>
+          <h2 id="launchpadTitle">Launchpad</h2>
+          <p id="launchpadHint" class="muted small" hidden>Drag tiles to reorder · click a tile to edit · Esc to finish</p>
+        </div>
+        <div class="card-actions">
+          <button type="button" id="editLinksBtn" class="btn btn-ghost btn-sm" aria-pressed="false"></button>
+          <button type="button" id="addLinkBtn" class="btn btn-primary btn-sm" data-icon="plus"><span>Add link</span></button>
+        </div>
+      </div>
+      <ul id="linkGrid" class="link-grid" aria-label="Bookmarks"></ul>
+    </section>
+
+    <div class="columns">
+      <!-- Habits -->
+      <section class="card habits" aria-labelledby="habitsTitle">
+        <div class="card-header">
+          <div>
+            <h2 id="habitsTitle">Habits <span id="habitSummary" class="pill"></span></h2>
+            <p class="muted small">Tick today’s box · click any square to fix past days</p>
+          </div>
+          <div class="card-actions">
+            <button type="button" id="addHabitBtn" class="btn btn-primary btn-sm" data-icon="plus"><span>Add habit</span></button>
+          </div>
+        </div>
+        <ul id="habitList" class="habit-list"></ul>
+      </section>
+
+      <!-- Brain dump -->
+      <section class="card notes" aria-labelledby="notesTitle">
+        <div class="card-header">
+          <div>
+            <h2 id="notesTitle">Brain Dump</h2>
+            <p id="noteStatus" class="muted small" aria-live="polite">Auto-saves as you type</p>
+          </div>
+          <div class="segmented" role="group" aria-label="Editor view">
+            <button type="button" data-note-mode="write" aria-pressed="false">Write</button>
+            <button type="button" data-note-mode="split" aria-pressed="true">Split</button>
+            <button type="button" data-note-mode="preview" aria-pressed="false">Preview</button>
+          </div>
+        </div>
+
+        <div class="md-toolbar" role="toolbar" aria-label="Formatting">
+          <button type="button" data-md="bold" title="Bold (Ctrl/⌘+B)" aria-label="Bold"><b>B</b></button>
+          <button type="button" data-md="italic" title="Italic (Ctrl/⌘+I)" aria-label="Italic"><i>I</i></button>
+          <button type="button" data-md="strike" title="Strikethrough" aria-label="Strikethrough"><s>S</s></button>
+          <span class="sep" aria-hidden="true"></span>
+          <button type="button" data-md="heading" title="Heading" aria-label="Heading">H</button>
+          <button type="button" data-md="bullet" title="Bullet list" aria-label="Bullet list">•</button>
+          <button type="button" data-md="task" title="Task list" aria-label="Task list">☐</button>
+          <button type="button" data-md="quote" title="Quote" aria-label="Quote">❝</button>
+          <span class="sep" aria-hidden="true"></span>
+          <button type="button" data-md="code" title="Inline code" aria-label="Inline code"><code>&lt;/&gt;</code></button>
+          <button type="button" data-md="link" title="Link (Ctrl/⌘+K)" aria-label="Link">🔗</button>
+        </div>
+
+        <div id="noteEditor" class="note-editor" data-mode="split">
+          <label for="noteInput" class="sr-only">Brain dump (Markdown)</label>
+          <textarea id="noteInput" class="note-input" spellcheck="true" placeholder="Dump everything on your mind… Markdown is supported."></textarea>
+          <div id="notePreview" class="note-preview md" aria-label="Preview" tabindex="0"></div>
+        </div>
+
+        <div class="card-footer">
+          <span id="noteCount" class="muted small"></span>
+          <button type="button" id="clearNoteBtn" class="btn btn-ghost btn-sm" data-icon="trash"><span>Clear</span></button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer container">
+    <p>Your data never leaves this browser. <button type="button" id="footerExportBtn" class="link-btn">Export a backup</button> now and then.</p>
+  </footer>
+
+  <!-- Habit editor -->
+  <dialog id="habitDialog" class="dialog" aria-labelledby="habitDialogTitle">
+    <form method="dialog" novalidate>
+      <header class="dialog-header">
+        <h3 id="habitDialogTitle" data-title>New habit</h3>
+        <button type="button" class="btn-icon btn-sm" data-close data-icon="x" aria-label="Close"></button>
+      </header>
+      <label class="field">
+        <span>Habit name</span>
+        <input name="name" type="text" maxlength="80" required autocomplete="off" placeholder="e.g. Meditate for 10 minutes">
+      </label>
+      <fieldset class="field">
+        <legend>Color</legend>
+        <div id="habitColors" class="swatches"></div>
+      </fieldset>
+      <footer class="dialog-footer">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save habit</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Link editor -->
+  <dialog id="linkDialog" class="dialog" aria-labelledby="linkDialogTitle">
+    <form method="dialog" novalidate>
+      <header class="dialog-header">
+        <h3 id="linkDialogTitle" data-title>New link</h3>
+        <button type="button" class="btn-icon btn-sm" data-close data-icon="x" aria-label="Close"></button>
+      </header>
+
+      <div class="link-editor">
+        <div class="link-fields">
+          <label class="field">
+            <span>URL</span>
+            <input name="url" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="github.com" required>
+            <small id="linkUrlError" class="field-error" hidden>Enter a valid http(s), mailto or file URL.</small>
+          </label>
+          <label class="field">
+            <span>Title</span>
+            <input name="title" type="text" maxlength="60" autocomplete="off" placeholder="Auto from URL">
+          </label>
+        </div>
+        <div class="link-preview-wrap">
+          <span class="muted small">Preview</span>
+          <div id="linkPreview" class="tile-link link-preview"></div>
+        </div>
+      </div>
+
+      <fieldset class="field">
+        <legend>Icon</legend>
+        <div class="segmented segmented-full">
+          <label><input type="radio" name="iconType" value="auto" checked><span>Favicon</span></label>
+          <label><input type="radio" name="iconType" value="emoji"><span>Emoji</span></label>
+          <label><input type="radio" name="iconType" value="image"><span>Image</span></label>
+          <label><input type="radio" name="iconType" value="letter"><span>Letter</span></label>
+        </div>
+      </fieldset>
+
+      <div data-icon-panel="auto" class="muted small">Uses the site’s own <code>/favicon.ico</code>. Falls back to a letter tile if it can’t load.</div>
+      <label data-icon-panel="emoji" class="field" hidden>
+        <span>Emoji or short text</span>
+        <input name="emoji" type="text" maxlength="16" autocomplete="off" placeholder="🚀">
+      </label>
+      <div data-icon-panel="image" class="field" hidden>
+        <span>Image URL or upload</span>
+        <div class="input-row">
+          <input name="imageUrl" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://example.com/icon.png">
+          <button type="button" id="iconUploadBtn" class="btn btn-ghost" data-icon="image"><span>Upload</span></button>
+        </div>
+        <input name="iconFile" type="file" accept="image/*" hidden>
+        <small class="muted">Uploads are resized to 96×96 and stored locally.</small>
+      </div>
+      <div data-icon-panel="letter" class="muted small" hidden>A colored tile with the first letter of the title.</div>
+
+      <footer class="dialog-footer">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save link</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Confirm -->
+  <dialog id="confirmDialog" class="dialog dialog-sm" aria-labelledby="confirmTitle">
+    <form method="dialog">
+      <h3 id="confirmTitle" data-confirm-title></h3>
+      <p class="muted" data-confirm-message></p>
+      <footer class="dialog-footer">
+        <button type="submit" value="cancel" class="btn btn-ghost">Cancel</button>
+        <button type="submit" value="ok" class="btn btn-primary" data-confirm-ok>Confirm</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/markdown.js" defer></script>
+  <script src="assets/js/quotes.js" defer></script>
+  <script src="assets/js/habits.js" defer></script>
+  <script src="assets/js/notes.js" defer></script>
+  <script src="assets/js/launchpad.js" defer></script>
+  <script src="assets/js/stats.js" defer></script>
+  <script src="assets/js/backup.js" defer></script>
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>

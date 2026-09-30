@@ -1,0 +1,43 @@
+/* LocalDeck quotes — bundled locally so the dashboard works fully offline. */
+(function () {
+  'use strict';
+
+  window.LocalDeck.quotes = [
+    { text: 'The secret of getting ahead is getting started.', author: 'Mark Twain' },
+    { text: 'We are what we repeatedly do. Excellence, then, is not an act, but a habit.', author: 'Will Durant' },
+    { text: 'Small deeds done are better than great deeds planned.', author: 'Peter Marshall' },
+    { text: 'You do not rise to the level of your goals. You fall to the level of your systems.', author: 'James Clear' },
+    { text: 'Action is the foundational key to all success.', author: 'Pablo Picasso' },
+    { text: 'It always seems impossible until it is done.', author: 'Nelson Mandela' },
+    { text: 'Focus on being productive instead of busy.', author: 'Tim Ferriss' },
+    { text: 'Do the hard jobs first. The easy jobs will take care of themselves.', author: 'Dale Carnegie' },
+    { text: 'Motivation is what gets you started. Habit is what keeps you going.', author: 'Jim Ryun' },
+    { text: 'The way to get started is to quit talking and begin doing.', author: 'Walt Disney' },
+    { text: 'Simplicity boils down to two steps: identify the essential, eliminate the rest.', author: 'Leo Babauta' },
+    { text: 'What you do every day matters more than what you do once in a while.', author: 'Gretchen Rubin' },
+    { text: 'Until we can manage time, we can manage nothing else.', author: 'Peter Drucker' },
+    { text: 'Success is the sum of small efforts, repeated day in and day out.', author: 'Robert Collier' },
+    { text: 'Your mind is for having ideas, not holding them.', author: 'David Allen' },
+    { text: 'Amateurs sit and wait for inspiration, the rest of us just get up and go to work.', author: 'Stephen King' },
+    { text: 'The best time to plant a tree was 20 years ago. The second best time is now.', author: 'Chinese proverb' },
+    { text: 'Discipline is choosing between what you want now and what you want most.', author: 'Augusta F. Kantra' },
+    { text: 'Well done is better than well said.', author: 'Benjamin Franklin' },
+    { text: 'You miss 100% of the shots you don’t take.', author: 'Wayne Gretzky' },
+    { text: 'Energy and persistence conquer all things.', author: 'Benjamin Franklin' },
+    { text: 'Either you run the day or the day runs you.', author: 'Jim Rohn' },
+    { text: 'Don’t count the days, make the days count.', author: 'Muhammad Ali' },
+    { text: 'Quality is not an act, it is a habit.', author: 'Aristotle' },
+    { text: 'A year from now you may wish you had started today.', author: 'Karen Lamb' },
+    { text: 'The man who moves a mountain begins by carrying away small stones.', author: 'Confucius' },
+    { text: 'Productivity is never an accident. It is always the result of a commitment to excellence.', author: 'Paul J. Meyer' },
+    { text: 'If you spend too much time thinking about a thing, you’ll never get it done.', author: 'Bruce Lee' },
+    { text: 'Start where you are. Use what you have. Do what you can.', author: 'Arthur Ashe' },
+    { text: 'Nothing will work unless you do.', author: 'Maya Angelou' },
+    { text: 'Great things are done by a series of small things brought together.', author: 'Vincent van Gogh' },
+    { text: 'Lost time is never found again.', author: 'Benjamin Franklin' },
+    { text: 'The future depends on what you do today.', author: 'Mahatma Gandhi' },
+    { text: 'Be regular and orderly in your life, so that you may be violent and original in your work.', author: 'Gustave Flaubert' },
+    { text: 'How we spend our days is, of course, how we spend our lives.', author: 'Annie Dillard' },
+    { text: 'Done is better than perfect.', author: 'Sheryl Sandberg' },
+  ];
+})();
